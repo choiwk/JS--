@@ -1,9 +1,8 @@
-.border-collapse {
-  border-collapse: collapse;
-}
-
 .border-separate {
   border-collapse: separate;
+}
+.border-collapse {
+  border-collapse: collapse;
 }
 
 .table-auto {

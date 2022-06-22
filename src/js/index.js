@@ -10,7 +10,6 @@ const store = {
 };
 function App() {
   const menu = [];
-  console.log(menu);
 
   const updateMenuCount = () => {
     const menuCount = $('#espresso-menu-list').querySelectorAll('li').length;
@@ -25,9 +24,10 @@ function App() {
     let espresso_menu_name = $('#espresso-menu-name').value;
     menu.push({ name: espresso_menu_name });
     store.setLocalStorage(menu);
+    console.log(menu);
     const template = menu
-      .map((item) => {
-        return `<li class="menu-list-item d-flex items-center py-2">
+      .map((item, idx) => {
+        return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
   <span class="w-100 pl-2 menu-name">${item.name}</span>
   <button
     type="button"
@@ -52,12 +52,16 @@ function App() {
   };
 
   const updateMenuName = (e) => {
+    const menuId = e.target.closest('li').dataset.menuId;
+    console.log(menuId);
     const $menuName = e.target.closest('li').querySelector('.menu-name');
-    const changedMenu = prompt(
+    const changedMenuName = prompt(
       '메뉴 이름을 변경해주세요.',
       $menuName.innerText
     );
-    $menuName.innerText = changedMenu;
+    menu[menuId].name = changedMenuName;
+    store.setLocalStorage(menu);
+    $menuName.innerText = changedMenuName;
   };
 
   const removeMenuName = (e) => {
@@ -65,6 +69,17 @@ function App() {
       .closest('li')
       .querySelector('.menu-name').innerText;
     if (confirm(`"${$menuName}" 삭제하시겠습니까?`)) {
+      const menuId = e.target.closest('li').dataset.menuId;
+      console.log(menuId);
+      console.log(menu[2]);
+
+      for (let i = 0; i < menu.length; i++) {
+        if (menu[i].name === $menuName) {
+          menu.splice(i, 1);
+          i--;
+        }
+      }
+      store.setLocalStorage(menu);
       e.target.closest('li').remove();
       updateMenuCount();
     }
