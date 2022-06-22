@@ -69,10 +69,6 @@ function App() {
       .closest('li')
       .querySelector('.menu-name').innerText;
     if (confirm(`"${$menuName}" 삭제하시겠습니까?`)) {
-      const menuId = e.target.closest('li').dataset.menuId;
-      console.log(menuId);
-      console.log(menu[2]);
-
       for (let i = 0; i < menu.length; i++) {
         if (menu[i].name === $menuName) {
           menu.splice(i, 1);
