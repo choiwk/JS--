@@ -9,17 +9,25 @@ const store = {
   },
 };
 function App() {
-  this.menu = [];
-  const storageLength = store.getLocalStorage() || [];
+  this.menu = {
+    espresso: [],
+    frappuccino: [],
+    blended: [],
+    teavana: [],
+    desert: [],
+  };
+  console.log(this.menu);
+  this.currentCategory = 'espresso';
+  const storageLength = store.getLocalStorage();
   this.init = () => {
-    if (storageLength.length > 1) {
+    if (storageLength) {
       this.menu = store.getLocalStorage();
     }
     render();
   };
 
   const render = () => {
-    const template = this.menu
+    const template = this.menu[this.currentCategory]
       .map((item, idx) => {
         return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
   <span class="w-100 pl-2 menu-name">${item.name}</span>
@@ -55,7 +63,7 @@ function App() {
       return;
     }
     const espresso_menu_name = $('#espresso-menu-name').value;
-    this.menu.push({ name: espresso_menu_name });
+    this.menu[this.currentCategory].push({ name: espresso_menu_name });
     store.setLocalStorage(this.menu);
     render();
     $('#espresso-menu-name').value = '';
@@ -63,14 +71,15 @@ function App() {
 
   const updateMenuName = (e) => {
     const menuId = e.target.closest('li').dataset.menuId;
-
+    console.log(menuId);
+    console.log();
     const $menuName = e.target.closest('li').querySelector('.menu-name');
     const changedMenuName = prompt(
       '메뉴 이름을 변경해주세요.',
       $menuName.innerText
     );
-    this.menu[menuId].name = changedMenuName;
-    store.setLocalStorage(this.menu);
+    this.menu[this.currentCategory][menuId].name = changedMenuName;
+    store.setLocalStorage(this.menu[this.currentCategory]);
     $menuName.innerText = changedMenuName;
   };
 
@@ -79,9 +88,9 @@ function App() {
       .closest('li')
       .querySelector('.menu-name').innerText;
     if (confirm(`"${$menuName}" 삭제하시겠습니까?`)) {
-      for (let i = 0; i < this.menu.length; i++) {
-        if (this.menu[i].name === $menuName) {
-          this.menu.splice(i, 1);
+      for (let i = 0; i < this.menu[this.currentCategory].length; i++) {
+        if (this.menu[this.currentCategory][i].name === $menuName) {
+          this.menu[this.currentCategory].splice(i, 1);
           i--;
         }
       }
@@ -99,6 +108,7 @@ function App() {
       removeMenuName(e);
     }
   });
+
   $('#espresso-menu-form').addEventListener('submit', (e) => {
     e.preventDefault();
   });
@@ -110,6 +120,15 @@ function App() {
       return;
     }
     createMenuItem();
+  });
+
+  $('nav').addEventListener('click', (e) => {
+    const isCategoryBtn = e.target.classList.contains('cafe-category-name');
+
+    if (isCategoryBtn) {
+      const categoryName = e.target.dataset.categoryName;
+      console.log(categoryName);
+    }
   });
 }
 
