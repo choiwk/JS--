@@ -3,15 +3,15 @@ import store from './store/store.js';
 
 //? 서버요청 부분
 // - [x] 1. 웹 서버를 띄운다
-// - [] 2. 서버에 새로운 메뉴가 추가될 수 있도록 요청한다.
-// - [] 3. 서버에 카테고리별 메뉴리스트를 불러온다.
-// - [] 3. 서버에 메뉴가 수정될 수 있도록 요청한다.
-// - [] 4. 서버에 메뉴의 품절상태가 토글될 수 있도록 요청한다.
-// - [] 5. 서버에 메뉴가 삭제될 수 있도록 요청한다.
+// - [x] 2. 서버에 새로운 메뉴가 추가될 수 있도록 요청한다.
+// - [x] 3. 서버에 카테고리별 메뉴리스트를 불러온다.
+// - [x] 3. 서버에 메뉴가 수정될 수 있도록 요청한다.
+// - [x] 4. 서버에 메뉴의 품절상태가 토글될 수 있도록 요청한다.
+// - [x] 5. 서버에 메뉴가 삭제될 수 있도록 요청한다.
 
 //? 리팩토링 부분
-// - [] 1. localStorage에 저장하는 로직은 지운다.
-// - [] 2. fetch 비동기 api를 사용하는 부분을 async await을 사용하여 구현한다.
+// - [x] 1. localStorage에 저장하는 로직은 지운다.
+// - [x] 2. fetch 비동기 api를 사용하는 부분을 async await을 사용하여 구현한다.
 
 //? 사용자 경험
 // - [] 1. API 통신이 실패하는 경우에 대해서 사용자가 알 수 있게 alert으로 예외처리를 진행한다.
@@ -37,6 +37,47 @@ const menuApi = {
       alert('에러가 발생했습니다.');
     }
   },
+
+  async updateMenu(category, name, menuId) {
+    const response = await fetch(
+      `${BASE_URL}/category/${category}/menu/${menuId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      }
+    );
+    if (!response.ok) {
+      alert('메뉴를 수정하는데 실패하였습니다');
+    }
+    return response.json();
+  },
+
+  async soldOutMenu(category, menuId) {
+    const response = await fetch(
+      `${BASE_URL}/category/${category}/menu/${menuId}/soldout`,
+      {
+        method: 'PUT',
+      }
+    );
+    if (!response.ok) {
+      alert('품절처리를 할 수 없습니다');
+    }
+  },
+
+  async deleteMenu(category, menuId) {
+    const response = await fetch(
+      `${BASE_URL}/category/${category}/menu/${menuId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+    if (!response.ok) {
+      alert('메뉴를 삭제할 수 없습니다');
+    }
+  },
 };
 
 function App() {
@@ -60,9 +101,11 @@ function App() {
 
   const render = () => {
     const template = this.menu[this.currentCategory]
-      .map((item, idx) => {
-        return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
-  <span class="w-100 pl-2 menu-name ${item.soldOut ? 'sold-out' : ''}">${
+      .map((item) => {
+        return `<li data-menu-id="${
+          item.id
+        }" class="menu-list-item d-flex items-center py-2">
+  <span class="w-100 pl-2 menu-name ${item.isSoldOut ? 'sold-out' : ''}">${
           item.name
         }</span>
     <button
@@ -97,7 +140,7 @@ function App() {
     let soldOutNum = 0;
 
     for (let i = 0; i < menuLeng; i++) {
-      if (this.menu[this.currentCategory][i].soldOut) {
+      if (this.menu[this.currentCategory][i].isSoldOut) {
         soldOutNum++;
       }
     }
@@ -120,7 +163,7 @@ function App() {
     $('#menu-name').value = '';
   };
 
-  const updateMenuName = (e) => {
+  const updateMenuName = async (e) => {
     const $menuName = e.target.closest('li').querySelector('.menu-name');
     const menuId = e.target.closest('li').dataset.menuId;
     const changedMenuName = prompt(
@@ -130,34 +173,41 @@ function App() {
     if (changedMenuName == null) {
       return;
     } else {
-      this.menu[this.currentCategory][menuId].name = changedMenuName;
-      store.setLocalStorage(this.menu[this.currentCategory]);
+      await menuApi.updateMenu(this.currentCategory, changedMenuName, menuId);
+      this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+        this.currentCategory
+      );
       render();
     }
   };
 
-  const removeMenuName = (e) => {
+  const removeMenuName = async (e) => {
+    const menuId = e.target.closest('li').dataset.menuId;
     const $menuName = e.target
       .closest('li')
       .querySelector('.menu-name').innerText;
     if (confirm(`"${$menuName}" 삭제하시겠습니까?`)) {
-      for (let i = 0; i < this.menu[this.currentCategory].length; i++) {
-        if (this.menu[this.currentCategory][i].name === $menuName) {
-          this.menu[this.currentCategory].splice(i, 1);
-          i--;
-        }
-      }
-      store.setLocalStorage(this.menu);
+      // for (let i = 0; i < this.menu[this.currentCategory].length; i++) {
+      //   if (this.menu[this.currentCategory][i].name === $menuName) {
+      //     this.menu[this.currentCategory].splice(i, 1);
+      //     i--;
+      //   }
+      // }
+      await menuApi.deleteMenu(this.currentCategory, menuId);
+      this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+        this.currentCategory
+      );
       render();
     }
   };
 
-  const soldOutMenu = (e) => {
+  const soldOutMenu = async (e) => {
     const menuId = e.target.closest('li').dataset.menuId;
 
-    this.menu[this.currentCategory][menuId].soldOut =
-      !this.menu[this.currentCategory][menuId].soldOut;
-    store.setLocalStorage(this.menu);
+    await menuApi.soldOutMenu(this.currentCategory, menuId);
+    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     render();
   };
 
