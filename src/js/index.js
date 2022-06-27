@@ -24,6 +24,7 @@ function App() {
       this.menu = store.getLocalStorage();
     }
     render();
+    initEventListeners();
   };
 
   const render = () => {
@@ -61,8 +62,16 @@ function App() {
   };
 
   const updateMenuCount = () => {
-    const menuCount = $('#menu-list').querySelectorAll('li').length;
-    $('.menu-count').innerText = `총 ${menuCount}개`;
+    const menuLeng = this.menu[this.currentCategory].length;
+    let soldOutNum = 0;
+
+    for (let i = 0; i < menuLeng; i++) {
+      if (this.menu[this.currentCategory][i].soldOut) {
+        soldOutNum++;
+      }
+    }
+    const menuAmount = menuLeng - soldOutNum;
+    $('.menu-count').innerText = `총 ${menuAmount}개`;
   };
 
   const createMenuItem = () => {
@@ -78,15 +87,19 @@ function App() {
   };
 
   const updateMenuName = (e) => {
-    const menuId = e.target.closest('li').dataset.menuId;
     const $menuName = e.target.closest('li').querySelector('.menu-name');
+    const menuId = e.target.closest('li').dataset.menuId;
     const changedMenuName = prompt(
       '메뉴 이름을 변경해주세요.',
       $menuName.innerText
     );
-    this.menu[this.currentCategory][menuId].name = changedMenuName;
-    store.setLocalStorage(this.menu[this.currentCategory]);
-    $menuName.innerText = changedMenuName;
+    if (changedMenuName == null) {
+      return;
+    } else {
+      this.menu[this.currentCategory][menuId].name = changedMenuName;
+      store.setLocalStorage(this.menu[this.currentCategory]);
+      render();
+    }
   };
 
   const removeMenuName = (e) => {
@@ -101,57 +114,58 @@ function App() {
         }
       }
       store.setLocalStorage(this.menu);
-      e.target.closest('li').remove();
-      updateMenuCount();
+      render();
     }
   };
 
   const soldOutMenu = (e) => {
     const menuId = e.target.closest('li').dataset.menuId;
+
     this.menu[this.currentCategory][menuId].soldOut =
       !this.menu[this.currentCategory][menuId].soldOut;
     store.setLocalStorage(this.menu);
-    console.log(this.menu[this.currentCategory][menuId]);
     render();
   };
 
-  $('#menu-list').addEventListener('click', (e) => {
-    if (e.target.classList.contains('menu-sold-out-button')) {
-      soldOutMenu(e);
-    }
-    if (e.target.classList.contains('menu-edit-button')) {
-      updateMenuName(e);
-      return;
-    }
-    if (e.target.classList.contains('menu-remove-button')) {
-      removeMenuName(e);
-      return;
-    }
-  });
+  const initEventListeners = () => {
+    $('#menu-list').addEventListener('click', (e) => {
+      if (e.target.classList.contains('menu-sold-out-button')) {
+        soldOutMenu(e);
+      }
+      if (e.target.classList.contains('menu-edit-button')) {
+        updateMenuName(e);
+        return;
+      }
+      if (e.target.classList.contains('menu-remove-button')) {
+        removeMenuName(e);
+        return;
+      }
+    });
 
-  $('#menu-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-  });
+    $('#menu-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+    });
 
-  $('#menu-submit-button').addEventListener('click', createMenuItem);
+    $('#menu-submit-button').addEventListener('click', createMenuItem);
 
-  $('#menu-name').addEventListener('keypress', (e) => {
-    if (e.key !== 'Enter') {
-      return;
-    }
-    createMenuItem();
-  });
+    $('#menu-name').addEventListener('keypress', (e) => {
+      if (e.key !== 'Enter') {
+        return;
+      }
+      createMenuItem();
+    });
 
-  $('nav').addEventListener('click', (e) => {
-    const isCategoryBtn = e.target.classList.contains('cafe-category-name');
+    $('nav').addEventListener('click', (e) => {
+      const isCategoryBtn = e.target.classList.contains('cafe-category-name');
 
-    if (isCategoryBtn) {
-      const categoryName = e.target.dataset.categoryName;
-      this.currentCategory = categoryName;
-      $('#category-title').innerText = `${e.target.innerText} 메뉴 관리`;
-      render();
-    }
-  });
+      if (isCategoryBtn) {
+        const categoryName = e.target.dataset.categoryName;
+        this.currentCategory = categoryName;
+        $('#category-title').innerText = `${e.target.innerText} 메뉴 관리`;
+        render();
+      }
+    });
+  };
 }
 
 const app = new App();
