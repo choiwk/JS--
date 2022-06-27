@@ -19,6 +19,26 @@ import store from './store/store.js';
 
 const BASE_URL = 'http://localhost:3000/api';
 
+const menuApi = {
+  async getAllMenuByCategory(category) {
+    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
+    return response.json();
+  },
+
+  async createMenu(category, name) {
+    const response = await fetch(`${BASE_URL}/category/${category}/menu`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) {
+      alert('에러가 발생했습니다.');
+    }
+  },
+};
+
 function App() {
   this.menu = {
     espresso: [],
@@ -29,23 +49,22 @@ function App() {
   };
 
   this.currentCategory = 'espresso';
-  const storageLength = store.getLocalStorage();
-  this.init = () => {
-    if (storageLength) {
-      this.menu = store.getLocalStorage();
-    }
+
+  this.init = async () => {
+    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     render();
     initEventListeners();
   };
 
   const render = () => {
-    if (this.menu[this.currentCategory] !== undefined) {
-      const template = this.menu[this.currentCategory]
-        .map((item, idx) => {
-          return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
+    const template = this.menu[this.currentCategory]
+      .map((item, idx) => {
+        return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
   <span class="w-100 pl-2 menu-name ${item.soldOut ? 'sold-out' : ''}">${
-            item.name
-          }</span>
+          item.name
+        }</span>
     <button
     type="button"
     class="bg-gray-50 text-gray-500 text-sm mr-1 menu-sold-out-button"
@@ -66,14 +85,11 @@ function App() {
   </button>
 </li>
           `;
-        })
-        .join('');
+      })
+      .join('');
 
-      $('#menu-list').innerHTML = template;
-      updateMenuCount();
-    } else {
-      return;
-    }
+    $('#menu-list').innerHTML = template;
+    updateMenuCount();
   };
 
   const updateMenuCount = () => {
@@ -95,21 +111,13 @@ function App() {
       return;
     }
     const menu_name = $('#menu-name').value;
-    await fetch(`${BASE_URL}/category/${this.currentCategory}/menu`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name: menu_name }),
-    }).then((response) => response.json());
+    await menuApi.createMenu(this.currentCategory, menu_name);
 
-    await fetch(`${BASE_URL}/category/${this.currentCategory}/menu`)
-      .then((response) => response.json())
-      .then((menuList) => {
-        this.menu[this.currentCategory] = menuList;
-        render();
-        $('#menu-name').value = '';
-      });
+    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
+    render();
+    $('#menu-name').value = '';
   };
 
   const updateMenuName = (e) => {
@@ -181,13 +189,16 @@ function App() {
       createMenuItem();
     });
 
-    $('nav').addEventListener('click', (e) => {
+    $('nav').addEventListener('click', async (e) => {
       const isCategoryBtn = e.target.classList.contains('cafe-category-name');
 
       if (isCategoryBtn) {
         const categoryName = e.target.dataset.categoryName;
         this.currentCategory = categoryName;
         $('#category-title').innerText = `${e.target.innerText} 메뉴 관리`;
+        this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+          this.currentCategory
+        );
         render();
       }
     });
