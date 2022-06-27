@@ -1,13 +1,6 @@
-const $ = (selector) => document.querySelector(selector);
+import { $ } from './utils/dom.js';
+import store from './store/store.js';
 
-const store = {
-  setLocalStorage(menu) {
-    localStorage.setItem('menu', JSON.stringify(menu));
-  },
-  getLocalStorage() {
-    return JSON.parse(localStorage.getItem('menu'));
-  },
-};
 function App() {
   this.menu = {
     espresso: [],
@@ -28,12 +21,13 @@ function App() {
   };
 
   const render = () => {
-    const template = this.menu[this.currentCategory]
-      .map((item, idx) => {
-        return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
+    if (this.menu[this.currentCategory] !== undefined) {
+      const template = this.menu[this.currentCategory]
+        .map((item, idx) => {
+          return `<li data-menu-id="${idx}" class="menu-list-item d-flex items-center py-2">
   <span class="w-100 pl-2 menu-name ${item.soldOut ? 'sold-out' : ''}">${
-          item.name
-        }</span>
+            item.name
+          }</span>
     <button
     type="button"
     class="bg-gray-50 text-gray-500 text-sm mr-1 menu-sold-out-button"
@@ -54,11 +48,14 @@ function App() {
   </button>
 </li>
           `;
-      })
-      .join('');
+        })
+        .join('');
 
-    $('#menu-list').innerHTML = template;
-    updateMenuCount();
+      $('#menu-list').innerHTML = template;
+      updateMenuCount();
+    } else {
+      return;
+    }
   };
 
   const updateMenuCount = () => {
