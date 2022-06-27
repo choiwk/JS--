@@ -1,5 +1,5 @@
 import { $ } from './utils/dom.js';
-import store from './store/store.js';
+import menuApi from './api/api.js';
 
 //? 서버요청 부분
 // - [x] 1. 웹 서버를 띄운다
@@ -14,71 +14,8 @@ import store from './store/store.js';
 // - [x] 2. fetch 비동기 api를 사용하는 부분을 async await을 사용하여 구현한다.
 
 //? 사용자 경험
-// - [] 1. API 통신이 실패하는 경우에 대해서 사용자가 알 수 있게 alert으로 예외처리를 진행한다.
+// - [x] 1. API 통신이 실패하는 경우에 대해서 사용자가 알 수 있게 alert으로 예외처리를 진행한다.
 // - [] 2. 중복되는 메뉴는 추가할 수 없다.
-
-const BASE_URL = 'http://localhost:3000/api';
-
-const menuApi = {
-  async getAllMenuByCategory(category) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
-    return response.json();
-  },
-
-  async createMenu(category, name) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name }),
-    });
-    if (!response.ok) {
-      alert('에러가 발생했습니다.');
-    }
-  },
-
-  async updateMenu(category, name, menuId) {
-    const response = await fetch(
-      `${BASE_URL}/category/${category}/menu/${menuId}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name }),
-      }
-    );
-    if (!response.ok) {
-      alert('메뉴를 수정하는데 실패하였습니다');
-    }
-    return response.json();
-  },
-
-  async soldOutMenu(category, menuId) {
-    const response = await fetch(
-      `${BASE_URL}/category/${category}/menu/${menuId}/soldout`,
-      {
-        method: 'PUT',
-      }
-    );
-    if (!response.ok) {
-      alert('품절처리를 할 수 없습니다');
-    }
-  },
-
-  async deleteMenu(category, menuId) {
-    const response = await fetch(
-      `${BASE_URL}/category/${category}/menu/${menuId}`,
-      {
-        method: 'DELETE',
-      }
-    );
-    if (!response.ok) {
-      alert('메뉴를 삭제할 수 없습니다');
-    }
-  },
-};
 
 function App() {
   this.menu = {
@@ -92,14 +29,14 @@ function App() {
   this.currentCategory = 'espresso';
 
   this.init = async () => {
-    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
     render();
     initEventListeners();
   };
 
-  const render = () => {
+  const render = async () => {
+    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     const template = this.menu[this.currentCategory]
       .map((item) => {
         return `<li data-menu-id="${
@@ -135,6 +72,17 @@ function App() {
     updateMenuCount();
   };
 
+  const changeCategory = (e) => {
+    const isCategoryBtn = e.target.classList.contains('cafe-category-name');
+
+    if (isCategoryBtn) {
+      const categoryName = e.target.dataset.categoryName;
+      this.currentCategory = categoryName;
+      $('#category-title').innerText = `${e.target.innerText} 메뉴 관리`;
+      render();
+    }
+  };
+
   const updateMenuCount = () => {
     const menuLeng = this.menu[this.currentCategory].length;
     let soldOutNum = 0;
@@ -156,9 +104,6 @@ function App() {
     const menu_name = $('#menu-name').value;
     await menuApi.createMenu(this.currentCategory, menu_name);
 
-    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
     render();
     $('#menu-name').value = '';
   };
@@ -174,9 +119,6 @@ function App() {
       return;
     } else {
       await menuApi.updateMenu(this.currentCategory, changedMenuName, menuId);
-      this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
-        this.currentCategory
-      );
       render();
     }
   };
@@ -194,9 +136,6 @@ function App() {
       //   }
       // }
       await menuApi.deleteMenu(this.currentCategory, menuId);
-      this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
-        this.currentCategory
-      );
       render();
     }
   };
@@ -205,9 +144,6 @@ function App() {
     const menuId = e.target.closest('li').dataset.menuId;
 
     await menuApi.soldOutMenu(this.currentCategory, menuId);
-    this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
     render();
   };
 
@@ -239,19 +175,7 @@ function App() {
       createMenuItem();
     });
 
-    $('nav').addEventListener('click', async (e) => {
-      const isCategoryBtn = e.target.classList.contains('cafe-category-name');
-
-      if (isCategoryBtn) {
-        const categoryName = e.target.dataset.categoryName;
-        this.currentCategory = categoryName;
-        $('#category-title').innerText = `${e.target.innerText} 메뉴 관리`;
-        this.menu[this.currentCategory] = await menuApi.getAllMenuByCategory(
-          this.currentCategory
-        );
-        render();
-      }
-    });
+    $('nav').addEventListener('click', changeCategory);
   };
 }
 
