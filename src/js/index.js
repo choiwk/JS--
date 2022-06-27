@@ -102,6 +102,16 @@ function App() {
       return;
     }
     const menu_name = $('#menu-name').value;
+
+    const duplicatedItem = this.menu[this.currentCategory].find(
+      (el) => el.name === menu_name
+    );
+    if (duplicatedItem) {
+      alert('이미 중복된 메뉴입니다, 다시 입력해주세요.');
+      $('#menu-name').value = '';
+      return;
+    }
+    console.log(duplicatedItem);
     await menuApi.createMenu(this.currentCategory, menu_name);
 
     render();
