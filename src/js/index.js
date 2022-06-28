@@ -111,7 +111,7 @@ function App() {
       $('#menu-name').value = '';
       return;
     }
-    console.log(duplicatedItem);
+
     await menuApi.createMenu(this.currentCategory, menu_name);
 
     render();

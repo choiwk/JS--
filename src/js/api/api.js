@@ -1,63 +1,74 @@
 const BASE_URL = 'http://localhost:3000/api';
 
+const request = async (url, option) => {
+  const response = await fetch(url, option);
+  if (!response.ok) {
+    alert('에러가 발생하였습니다.');
+  }
+  return response.json();
+};
+
+const requestWithoutJson = async (url, option) => {
+  const response = await fetch(url, option);
+  if (!response.ok) {
+    alert('에러가 발생하였습니다.');
+  }
+  return response;
+};
+
+const HTTP_METHOD = {
+  POST(data) {
+    return {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    };
+  },
+  PUT(data) {
+    return {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: data ? JSON.stringify(data) : null,
+    };
+  },
+  DELETE() {
+    return {
+      method: 'DELETE',
+    };
+  },
+};
+
 const menuApi = {
   async getAllMenuByCategory(category) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
-    return response.json();
+    return request(`${BASE_URL}/category/${category}/menu`);
   },
 
   async createMenu(category, name) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name }),
-    });
-    if (!response.ok) {
-      alert('에러가 발생했습니다.');
-    }
+    return request(
+      `${BASE_URL}/category/${category}/menu`,
+      HTTP_METHOD.POST({ name })
+    );
   },
 
   async updateMenu(category, name, menuId) {
-    const response = await fetch(
+    return request(
       `${BASE_URL}/category/${category}/menu/${menuId}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name }),
-      }
+      HTTP_METHOD.PUT({ name })
     );
-    if (!response.ok) {
-      alert('메뉴를 수정하는데 실패하였습니다');
-    }
-    return response.json();
   },
 
   async soldOutMenu(category, menuId) {
-    const response = await fetch(
+    return request(
       `${BASE_URL}/category/${category}/menu/${menuId}/soldout`,
-      {
-        method: 'PUT',
-      }
+      HTTP_METHOD.PUT()
     );
-    if (!response.ok) {
-      alert('품절처리를 할 수 없습니다');
-    }
   },
 
   async deleteMenu(category, menuId) {
-    const response = await fetch(
+    return requestWithoutJson(
       `${BASE_URL}/category/${category}/menu/${menuId}`,
-      {
-        method: 'DELETE',
-      }
+      HTTP_METHOD.DELETE()
     );
-    if (!response.ok) {
-      alert('메뉴를 삭제할 수 없습니다');
-    }
   },
 };
 
